@@ -1,0 +1,89 @@
+buildscript {
+    repositories { 
+    		jcenter() 
+    	}
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.5.10.RELEASE")
+    }
+}
+
+apply plugin: 'java-library'
+apply plugin: "org.springframework.boot"
+
+repositories {
+    jcenter()
+}
+
+ext {
+    schemaSources = file("$project.projectDir/src/main/resources/schema")
+    generatedBeansSources = file("$buildDir/generated-beans")	
+    compiledBeans = file("$buildDir/classes")
+}
+
+dependencies {
+    compile files(file("${project.name}.jar"))
+
+    compile "org.apache.camel:camel-spring-boot-starter:$camelVersion"
+    compile "org.apache.camel:camel-cxf:$camelVersion"
+    compile "org.apache.camel:camel-jaxb:$camelVersion"
+
+    compile "org.apache.cxf:cxf-codegen-plugin:$cxfVersion"
+
+    compile "org.springframework.boot:spring-boot-starter-web:$springBootVersion"
+    compile "org.springframework.boot:spring-boot-actuator:$springBootVersion"
+    compile "org.springframework.boot:spring-boot-devtools:$springBootVersion"
+    
+    testImplementation "junit:junit:$junitVersion"
+    testImplementation "org.apache.camel:camel-test:$camelVersion"
+    testImplementation "org.apache.camel:camel-test-spring:$camelVersion"
+    testImplementation "org.springframework.boot:spring-boot-starter-test:$springBootVersion"
+}
+
+bootRun {
+    //jvmArgs = ["-Dx=y"]
+}
+
+task generateWsdlJavaClasses(type: Jar) {
+
+	dependsOn processResources
+	
+	// Always run this task
+    outputs.upToDateWhen { false }
+
+    archiveName = "${project.name}.jar"
+    destinationDir = project.projectDir
+
+    manifest {
+        attributes = ["Implementation-Version": 1.0]
+    }
+
+    from(schemaSources) {
+        into "schema"
+    }
+    from compiledBeans
+    
+    doFirst {
+        delete generatedBeansSources
+        delete compiledBeans
+        wsdlToJavaJaxb("logfiles.wsdl")
+    }
+}
+
+ExecResult wsdlToJavaJaxb(String wsdlFile, String namespace = null) {
+	javaexec {
+		classpath = configurations.compile
+		main = "org.apache.cxf.tools.wsdlto.WSDLToJava"
+		defaultCharacterEncoding = "utf-8"
+		args "-db", "jaxb"
+		args "-impl"
+		args "-compile"
+		args "-classdir", compiledBeans
+		if (namespace) {
+			args "-p", namespace
+		}
+		args "-d", generatedBeansSources
+		args file("$schemaSources/$wsdlFile")
+		
+		println("$schemaSources/$wsdlFile")
+	}
+}

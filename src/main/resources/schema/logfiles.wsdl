@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<definitions 
+	name="logfiles"
+	targetNamespace="http://www.keller.ch/xmlns/logfiles"
+	xmlns:tns="http://www.keller.ch/xmlns/logfiles" 
+	xmlns="http://schemas.xmlsoap.org/wsdl/"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+	xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+	xmlns:xmime="http://www.w3.org/2005/05/xmlmime" >
+
+	<types>
+		<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+			elementFormDefault="qualified" targetNamespace="http://www.keller.ch/xmlns/logfiles">
+
+			<xsd:element name="getLogfile">
+				<xsd:complexType name="getLogfileType">
+					<xsd:sequence>
+						<xsd:element name="inputParameter">
+							<xsd:complexType>
+								<xsd:sequence>
+									<xsd:element name="filename" type="xsd:string" />
+								</xsd:sequence>
+							</xsd:complexType>
+						</xsd:element>
+					</xsd:sequence>
+				</xsd:complexType>	
+			</xsd:element>
+			<xsd:element name="getLogfileResponse">			
+				<xsd:complexType name="getLogfileResponseType">
+					<xsd:sequence>
+						<xsd:element name="result">
+							<xsd:complexType>
+								<xsd:sequence>
+									<xsd:element name="name" type="xsd:string" />
+									<xsd:element name="content" type="xsd:base64Binary" xmime:expectedContentTypes="application/octet-stream" />
+								</xsd:sequence>
+							</xsd:complexType>
+						</xsd:element>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+		</xsd:schema>
+	</types>
+		
+	<message name="getLogfileRequest">
+		<part name="parameters" element="tns:getLogfile" />
+	</message>
+	<message name="getLogfileResponse">
+		<part name="parameters" element="tns:getLogfileResponse" />
+	</message>
+
+	<portType name="logfilesPortType">
+		<operation name="getLogfile">
+			<input message="tns:getLogfileRequest" />
+			<output message="tns:getLogfileResponse" />
+		</operation>
+    </portType>
+    
+	<binding name="logfilesSOAP" type="tns:logfilesPortType">
+		<soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http" />
+		<operation name="getLogfile">
+			<soap:operation soapAction="http://www.keller.ch/xmlns/logfiles/getLogfile" />
+			<input>
+				<soap:body parts="parameters" use="literal" />
+			</input>
+			<output>
+				<soap:body use="literal" />
+			</output>
+		</operation>
+	</binding>
+	
+	<service name="logfilesService">
+		<port name="logfiles" binding="tns:logfilesSOAP">
+			<soap:address location="http://localhost:8080/logfiles" />
+		</port>
+	</service>
+	
+</definitions>
