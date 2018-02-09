@@ -1,5 +1,7 @@
 # Camel CXF memory test project
 
+See [CAMEL-11370](https://issues.apache.org/jira/browse/CAMEL-11370) Problem with MTOM in Camel-CXF
+
 Generate JAXB java classes:
 
     ./gradlew generateWsdlJavaClasses
