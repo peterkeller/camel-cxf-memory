@@ -18,4 +18,4 @@ Memory test, i.e.:
     file 50mb.log        =      52'565'760
     free heap            =     449'008'600
 
-I.e., for handling a 50 MB file the heap usage is 506 - 36 MB = 470 MB. Using jvisualvm, one can see that the maximum heap usage is normally even in the order of 1 GB.
+I.e., for handling a 50 MB file the heap usage is 449 - 123 MB = 326 MB. Using jvisualvm, one can see that the maximum heap usage is normally even in the order of 1 GB.
