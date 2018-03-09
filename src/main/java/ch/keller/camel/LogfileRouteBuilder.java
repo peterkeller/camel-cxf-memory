@@ -10,6 +10,7 @@ import org.apache.camel.Processor;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.converter.jaxb.JaxbDataFormat;
 import org.apache.camel.spi.DataFormat;
+import org.apache.cxf.message.Message;
 import org.springframework.stereotype.Component;
 
 import ch.keller.xmlns.logfiles.GetLogfileResponseType;
@@ -20,7 +21,7 @@ import ch.keller.xmlns.logfiles.ObjectFactory;
 @Component
 public class LogfileRouteBuilder extends RouteBuilder {
 
-    public static final String ENDPOINT = "cxf:bean:" + AppConfiguration.BEAN_C3_LOGFILES_WS+"?dataFormat=PAYLOAD";
+    public static final String ENDPOINT = "cxf:bean:" + AppConfiguration.BEAN_C3_LOGFILES_WS;
 
     @Override
     public void configure() throws Exception {
@@ -28,11 +29,9 @@ public class LogfileRouteBuilder extends RouteBuilder {
             .noStreamCaching()
             .process(new GcProcessor())
             .wireTap("direct:printHeap")
-            //.setProperty(Message.MTOM_ENABLED, constant(true))
+            .setProperty(Message.MTOM_ENABLED, constant(true))
             //.log("${body}")
-            .unmarshal(jaxbDataFormatGetlogFileRequest())
             .bean(new LogfileProcessor())
-            .marshal(jaxbDataFormatGetlogFileResponse())
             .wireTap("direct:printHeap");
 
         from("direct:printHeap")
@@ -40,28 +39,6 @@ public class LogfileRouteBuilder extends RouteBuilder {
                 final long heap = getCurrentlyUsedMemory();
                 System.out.printf("free heap            = %15s%n", MemoryFormater.format(heap));
              });
-    }
-
-    private static DataFormat jaxbDataFormatGetlogFileRequest() throws JAXBException {
-        // TODO leads to javax.xml.bind.UnmarshalException
-        //final JAXBContext jaxbContext = JAXBContext.newInstance(GetLogfileType.class);
-        //final JaxbDataFormat jaxbDataFormat = new JaxbDataFormat(jaxbContext);
-
-        final ObjectFactory objectFactory = new ObjectFactory();
-        final JaxbDataFormat jaxbDataFormat = new JaxbDataFormat();
-        jaxbDataFormat.setContextPath(GetLogfileType.class.getPackage().getName());
-        jaxbDataFormat.setPartClass(GetLogfileType.class.getName());
-        jaxbDataFormat.setPartNamespace(objectFactory.createGetLogfile(new GetLogfileType()).getName());
-
-        jaxbDataFormat.setIgnoreJAXBElement(false); // see http://camel.apache.org/jaxb.html#JAXB-WorkingwiththeObjectFactory
-        return jaxbDataFormat;
-    }
-
-    private static DataFormat jaxbDataFormatGetlogFileResponse() throws JAXBException {
-        final JAXBContext jaxbContext = JAXBContext.newInstance(GetLogfileResponseType.class);
-        final JaxbDataFormat jaxbDataFormat = new JaxbDataFormat(jaxbContext);
-        jaxbDataFormat.setIgnoreJAXBElement(false); // see http://camel.apache.org/jaxb.html#JAXB-WorkingwiththeObjectFactory
-        return jaxbDataFormat;
     }
 
     private static class GcProcessor implements Processor {
